@@ -1,0 +1,1056 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mining Output Dashboard</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --panel-2: #f8fbff;
+      --line: #d9e2ec;
+      --text: #102a43;
+      --muted: #627d98;
+      --accent: #2563eb;
+      --accent-2: #1d4ed8;
+      --success-bg: #ecfdf3;
+      --success-text: #027a48;
+      --danger-bg: #fef3f2;
+      --danger-text: #b42318;
+      --warn-bg: #fff7ed;
+      --warn-text: #b54708;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 28px 20px 40px;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.5;
+      max-width: 840px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      border: 1px solid transparent;
+      background: var(--accent);
+      color: #fff;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.2s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn:hover { background: var(--accent-2); }
+    .btn.secondary {
+      background: #fff;
+      color: var(--text);
+      border-color: var(--line);
+    }
+    .btn.secondary:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .sidebar {
+      padding: 18px;
+      position: sticky;
+      top: 16px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 0 0 14px;
+    }
+
+    .field-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #334e68;
+    }
+
+    .field small {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .input,
+    .select {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      font-size: 14px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .input:focus,
+    .select:focus {
+      border-color: #93c5fd;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+
+    .two-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .sidebar-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .content {
+      display: grid;
+      gap: 20px;
+    }
+
+    .status-bar {
+      padding: 14px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+    }
+
+    .status-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .dataset-meta {
+      color: var(--muted);
+      font-size: 13px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .kpi {
+      padding: 18px;
+      background: var(--panel);
+      border: 1px solid rgba(15, 23, 42, 0.06);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .kpi .label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .kpi .value {
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .kpi .sub {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .card {
+      padding: 18px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .card-header h2 {
+      font-size: 18px;
+      margin: 0 0 4px;
+    }
+
+    .card-header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+    }
+
+    .legend-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    #chart {
+      width: 100%;
+      min-height: 520px;
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 980px;
+      background: #fff;
+    }
+
+    th, td {
+      padding: 12px 12px;
+      border-bottom: 1px solid #edf2f7;
+      text-align: left;
+      font-size: 13px;
+      vertical-align: top;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      background: #f8fbff;
+      color: #334e68;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      z-index: 1;
+    }
+
+    tbody tr:hover { background: #fafcff; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .pill.success {
+      background: var(--success-bg);
+      color: var(--success-text);
+    }
+
+    .pill.danger {
+      background: var(--danger-bg);
+      color: var(--danger-text);
+    }
+
+    .pill.warn {
+      background: var(--warn-bg);
+      color: var(--warn-text);
+    }
+
+    .anomaly-tests {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .empty-state,
+    .loading-state,
+    .error-state {
+      padding: 26px 18px;
+      border: 1px dashed var(--line);
+      border-radius: 16px;
+      text-align: center;
+      color: var(--muted);
+      background: #fbfdff;
+    }
+
+    .error-state {
+      color: var(--danger-text);
+      background: var(--danger-bg);
+      border-color: #fecaca;
+    }
+
+    .footer-note {
+      padding: 14px 2px 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 1180px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+      .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 720px) {
+      .hero { flex-direction: column; }
+      .hero-actions { width: 100%; justify-content: stretch; }
+      .hero-actions .btn { flex: 1; }
+      .two-cols,
+      .sidebar-actions,
+      .kpis { grid-template-columns: 1fr; }
+      .page { padding: 18px 14px 28px; }
+      .hero h1 { font-size: 26px; }
+      #chart { min-height: 420px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="hero">
+      <div>
+        <h1>Mining Output Analysis Dashboard</h1>
+        <p>
+          Analyze daily mine output from Google Sheets, detect anomalies with four statistical methods,
+          compare mines against the total output, and export a polished PDF report with tables and charts.
+        </p>
+      </div>
+      <div class="hero-actions">
+        <button class="btn secondary" id="loadSampleBtn" type="button">Use current link</button>
+        <button class="btn" id="downloadPdfTopBtn" type="button">Generate PDF report</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <aside class="panel sidebar">
+        <h2 class="section-title">Controls</h2>
+        <div class="field-grid">
+          <div class="field">
+            <label for="sheetUrl">Google Sheets URL or CSV export URL</label>
+            <input class="input" id="sheetUrl" type="text" value="{{ default_sheet_url }}" placeholder="https://docs.google.com/spreadsheets/d/.../edit?gid=...">
+            <small>
+              The backend can accept the normal Google Sheets link and convert it into a CSV export URL automatically.
+            </small>
+          </div>
+
+          <div class="field">
+            <label for="entities">Mines to display</label>
+            <input class="input" id="entities" type="text" placeholder="Mine A, Mine B, Mine C">
+            <small>
+              Leave empty to show every mine. Total is always included automatically in the backend.
+            </small>
+          </div>
+
+          <div class="two-cols">
+            <div class="field">
+              <label for="chartType">Chart type</label>
+              <select class="select" id="chartType">
+                <option value="line">Line</option>
+                <option value="bar">Bar</option>
+                <option value="stacked">Stacked</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="trendDegree">Trendline degree</label>
+              <select class="select" id="trendDegree">
+                <option value="1">1</option>
+                <option value="2" selected>2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="two-cols">
+            <div class="field">
+              <label for="iqrK">IQR multiplier (k)</label>
+              <input class="input" id="iqrK" type="number" step="0.1" value="1.5">
+            </div>
+            <div class="field">
+              <label for="zThreshold">z-score threshold</label>
+              <input class="input" id="zThreshold" type="number" step="0.1" value="3.0">
+            </div>
+          </div>
+
+          <div class="two-cols">
+            <div class="field">
+              <label for="maWindow">Moving average window</label>
+              <input class="input" id="maWindow" type="number" step="1" value="7" min="2">
+            </div>
+            <div class="field">
+              <label for="maPct">Distance from MA (%)</label>
+              <input class="input" id="maPct" type="number" step="0.1" value="25">
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="grubbsAlpha">Grubbs alpha</label>
+            <input class="input" id="grubbsAlpha" type="number" step="0.0001" value="0.05" min="0.0001" max="0.5">
+            <small>
+              Lower alpha makes the Grubbs test stricter. This test is best interpreted carefully when many outliers exist.
+            </small>
+          </div>
+        </div>
+
+        <div class="sidebar-actions">
+          <button class="btn" id="analyzeBtn" type="button">Analyze</button>
+          <button class="btn secondary" id="resetBtn" type="button">Reset</button>
+        </div>
+
+        <div class="footer-note">
+          Tip: if your Google Sheet is in wide format like <strong>date + mine columns</strong>, the backend reshapes it automatically.
+          If it is in long format, use <strong>date, mine, output</strong>.
+        </div>
+      </aside>
+
+      <main class="content">
+        <section class="panel status-bar">
+          <div class="status-left">
+            <span class="badge"><span class="dot"></span><span id="statusText">Ready</span></span>
+            <div class="dataset-meta" id="datasetMeta">
+              <span>No dataset loaded yet.</span>
+            </div>
+          </div>
+          <div>
+            <button class="btn secondary" id="downloadPdfBtn" type="button">Download PDF</button>
+          </div>
+        </section>
+
+        <section class="kpis" id="kpis">
+          <div class="kpi">
+            <div class="label">Total anomalies</div>
+            <div class="value">—</div>
+            <div class="sub">Detected across the selected mines and total output.</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Spike anomalies</div>
+            <div class="value">—</div>
+            <div class="sub">Values materially above their normal pattern.</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Drop anomalies</div>
+            <div class="value">—</div>
+            <div class="sub">Values materially below their normal pattern.</div>
+          </div>
+          <div class="kpi">
+            <div class="label">Mines analyzed</div>
+            <div class="value">—</div>
+            <div class="sub">Distinct mines in the current dataset.</div>
+          </div>
+        </section>
+
+        <section class="panel card">
+          <div class="card-header">
+            <div>
+              <h2>Output chart</h2>
+              <p>Interactive chart with highlighted outliers and polynomial trendlines.</p>
+            </div>
+            <div class="legend">
+              <span class="legend-item"><span class="legend-swatch" style="background:#ef4444"></span>Spike anomaly</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#f59e0b"></span>Drop anomaly</span>
+              <span class="legend-item"><span class="legend-swatch" style="background:#64748b"></span>Trendline</span>
+            </div>
+          </div>
+          <div id="chart" class="loading-state">Load data to render the chart.</div>
+        </section>
+
+        <section class="panel card">
+          <div class="card-header">
+            <div>
+              <h2>Summary statistics by mine</h2>
+              <p>Mean, standard deviation, median, interquartile range, and anomaly counts.</p>
+            </div>
+          </div>
+          <div id="metricsContainer" class="table-wrap">
+            <div class="empty-state">No statistics yet.</div>
+          </div>
+        </section>
+
+        <section class="panel card">
+          <div class="card-header">
+            <div>
+              <h2>Anomaly register</h2>
+              <p>Detailed list of every spike and drop flagged by one or more selected tests.</p>
+            </div>
+          </div>
+          <div id="anomaliesContainer" class="table-wrap">
+            <div class="empty-state">No anomalies to display yet.</div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      payload: null,
+      loading: false,
+      error: null,
+    };
+
+    const els = {
+      sheetUrl: document.getElementById('sheetUrl'),
+      entities: document.getElementById('entities'),
+      chartType: document.getElementById('chartType'),
+      trendDegree: document.getElementById('trendDegree'),
+      iqrK: document.getElementById('iqrK'),
+      zThreshold: document.getElementById('zThreshold'),
+      maWindow: document.getElementById('maWindow'),
+      maPct: document.getElementById('maPct'),
+      grubbsAlpha: document.getElementById('grubbsAlpha'),
+      analyzeBtn: document.getElementById('analyzeBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      loadSampleBtn: document.getElementById('loadSampleBtn'),
+      downloadPdfBtn: document.getElementById('downloadPdfBtn'),
+      downloadPdfTopBtn: document.getElementById('downloadPdfTopBtn'),
+      statusText: document.getElementById('statusText'),
+      datasetMeta: document.getElementById('datasetMeta'),
+      kpis: document.getElementById('kpis'),
+      chart: document.getElementById('chart'),
+      metricsContainer: document.getElementById('metricsContainer'),
+      anomaliesContainer: document.getElementById('anomaliesContainer'),
+    };
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function fmt(value, digits = 2) {
+      if (value === null || value === undefined || Number.isNaN(Number(value))) return '—';
+      return Number(value).toLocaleString(undefined, {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: digits,
+      });
+    }
+
+    function setStatus(text, mode = 'info') {
+      els.statusText.textContent = text;
+      const badge = els.statusText.closest('.badge');
+      badge.style.background = mode === 'error' ? '#fef2f2' : mode === 'success' ? '#effaf3' : '#eff6ff';
+      badge.style.color = mode === 'error' ? '#b42318' : mode === 'success' ? '#027a48' : '#1d4ed8';
+    }
+
+    function getParams() {
+      return {
+        sheet_url: els.sheetUrl.value.trim(),
+        entities: els.entities.value.trim(),
+        chart_type: els.chartType.value,
+        trend_degree: els.trendDegree.value,
+        iqr_k: els.iqrK.value,
+        z_threshold: els.zThreshold.value,
+        ma_window: els.maWindow.value,
+        ma_pct: els.maPct.value,
+        grubbs_alpha: els.grubbsAlpha.value,
+      };
+    }
+
+    function buildQueryString() {
+      const params = getParams();
+      const search = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== '' && value !== null && value !== undefined) {
+          search.set(key, value);
+        }
+      });
+      return search.toString();
+    }
+
+    function resetForm() {
+      els.entities.value = '';
+      els.chartType.value = 'line';
+      els.trendDegree.value = '2';
+      els.iqrK.value = '1.5';
+      els.zThreshold.value = '3.0';
+      els.maWindow.value = '7';
+      els.maPct.value = '25';
+      els.grubbsAlpha.value = '0.05';
+    }
+
+    function renderDatasetMeta(dataset) {
+      if (!dataset) {
+        els.datasetMeta.innerHTML = '<span>No dataset loaded yet.</span>';
+        return;
+      }
+
+      els.datasetMeta.innerHTML = `
+        <span><strong>Rows:</strong> ${fmt(dataset.row_count, 0)}</span>
+        <span><strong>Mines:</strong> ${fmt(dataset.mine_count, 0)}</span>
+        <span><strong>Period:</strong> ${escapeHtml(dataset.min_date)} → ${escapeHtml(dataset.max_date)}</span>
+      `;
+    }
+
+    function renderKpis(payload) {
+      const anomalies = payload?.anomalies || [];
+      const metrics = payload?.metrics || [];
+      const spikes = anomalies.filter(a => a.direction === 'spike').length;
+      const drops = anomalies.filter(a => a.direction === 'drop').length;
+      const mineCount = payload?.dataset?.mine_count ?? 0;
+
+      const cards = [
+        {
+          label: 'Total anomalies',
+          value: fmt(anomalies.length, 0),
+          sub: 'Detected across the selected mines and total output.',
+        },
+        {
+          label: 'Spike anomalies',
+          value: fmt(spikes, 0),
+          sub: 'Values materially above their normal pattern.',
+        },
+        {
+          label: 'Drop anomalies',
+          value: fmt(drops, 0),
+          sub: 'Values materially below their normal pattern.',
+        },
+        {
+          label: 'Mines analyzed',
+          value: fmt(mineCount, 0),
+          sub: metrics.length ? `Summary rows: ${fmt(metrics.length, 0)}` : 'Distinct mines in the current dataset.',
+        },
+      ];
+
+      els.kpis.innerHTML = cards.map(card => `
+        <div class="kpi">
+          <div class="label">${escapeHtml(card.label)}</div>
+          <div class="value">${escapeHtml(card.value)}</div>
+          <div class="sub">${escapeHtml(card.sub)}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderMetricsTable(metrics) {
+      if (!metrics || !metrics.length) {
+        els.metricsContainer.innerHTML = '<div class="empty-state">No statistics returned for the selected dataset.</div>';
+        return;
+      }
+
+      const html = `
+        <table>
+          <thead>
+            <tr>
+              <th>Mine</th>
+              <th>Mean</th>
+              <th>Std. dev.</th>
+              <th>Median</th>
+              <th>Q1</th>
+              <th>Q3</th>
+              <th>IQR</th>
+              <th>Min</th>
+              <th>Max</th>
+              <th>Days</th>
+              <th>Anomalies</th>
+              <th>Spikes</th>
+              <th>Drops</th>
+              <th>IQR rule</th>
+              <th>z-score</th>
+              <th>MA distance</th>
+              <th>Grubbs</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${metrics.map(row => `
+              <tr>
+                <td><strong>${escapeHtml(row.mine)}</strong></td>
+                <td>${fmt(row.mean_daily_output)}</td>
+                <td>${fmt(row.std_dev)}</td>
+                <td>${fmt(row.median)}</td>
+                <td>${fmt(row.q1)}</td>
+                <td>${fmt(row.q3)}</td>
+                <td>${fmt(row.iqr)}</td>
+                <td>${fmt(row.min_output)}</td>
+                <td>${fmt(row.max_output)}</td>
+                <td>${fmt(row.days_count, 0)}</td>
+                <td>${fmt(row.anomaly_count, 0)}</td>
+                <td>${fmt(row.spike_count, 0)}</td>
+                <td>${fmt(row.drop_count, 0)}</td>
+                <td>${fmt(row.iqr_count, 0)}</td>
+                <td>${fmt(row.z_score_count, 0)}</td>
+                <td>${fmt(row.moving_average_count, 0)}</td>
+                <td>${fmt(row.grubbs_count, 0)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+
+      els.metricsContainer.innerHTML = html;
+    }
+
+    function badgeClass(direction) {
+      if (direction === 'spike') return 'danger';
+      if (direction === 'drop') return 'warn';
+      return 'success';
+    }
+
+    function renderAnomaliesTable(anomalies) {
+      if (!anomalies || !anomalies.length) {
+        els.anomaliesContainer.innerHTML = '<div class="empty-state">No anomalies detected with the current parameters.</div>';
+        return;
+      }
+
+      const html = `
+        <table>
+          <thead>
+            <tr>
+              <th>Mine</th>
+              <th>Date</th>
+              <th>Value</th>
+              <th>Direction</th>
+              <th>Triggered tests</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${anomalies.map(item => `
+              <tr>
+                <td><strong>${escapeHtml(item.mine)}</strong></td>
+                <td>${escapeHtml(item.date)}</td>
+                <td>${fmt(item.value)}</td>
+                <td><span class="pill ${badgeClass(item.direction)}">${escapeHtml(item.direction)}</span></td>
+                <td>
+                  <div class="anomaly-tests">
+                    ${(item.tests || []).map(test => `<span class="pill success">${escapeHtml(test)}</span>`).join('')}
+                  </div>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+
+      els.anomaliesContainer.innerHTML = html;
+    }
+
+    function renderChart(payload) {
+      const series = payload?.chart?.series || [];
+      const chartType = payload?.chart?.chart_type || 'line';
+
+      if (!series.length) {
+        els.chart.innerHTML = '<div class="empty-state">No chart data returned for the selected dataset.</div>';
+        return;
+      }
+
+      const traces = [];
+      const isBar = chartType === 'bar' || chartType === 'stacked';
+
+      series.forEach(item => {
+        if (isBar) {
+          traces.push({
+            x: item.x,
+            y: item.y,
+            type: 'bar',
+            name: item.mine,
+            hovertemplate: `${item.mine}<br>Date=%{x}<br>Output=%{y}<extra></extra>`,
+          });
+        } else {
+          traces.push({
+            x: item.x,
+            y: item.y,
+            type: 'scatter',
+            mode: 'lines+markers',
+            name: item.mine,
+            line: { width: item.mine === 'Total' ? 3.5 : 2 },
+            marker: { size: item.mine === 'Total' ? 7 : 5 },
+            hovertemplate: `${item.mine}<br>Date=%{x}<br>Output=%{y}<extra></extra>`,
+          });
+
+          if (Array.isArray(item.trendline) && item.trendline.some(v => v !== null)) {
+            traces.push({
+              x: item.x,
+              y: item.trendline,
+              type: 'scatter',
+              mode: 'lines',
+              name: `${item.mine} trend`,
+              line: { width: 2, dash: 'dash', color: '#64748b' },
+              opacity: 0.8,
+              hovertemplate: `${item.mine} trend<br>Date=%{x}<br>Trend=%{y}<extra></extra>`,
+            });
+          }
+        }
+
+        const spikes = (item.outliers || []).filter(o => o.direction === 'spike');
+        const drops = (item.outliers || []).filter(o => o.direction === 'drop');
+
+        if (spikes.length) {
+          traces.push({
+            x: spikes.map(o => o.x),
+            y: spikes.map(o => o.y),
+            type: 'scatter',
+            mode: 'markers',
+            name: `${item.mine} spikes`,
+            marker: {
+              size: 12,
+              color: '#ef4444',
+              line: { color: '#ffffff', width: 1.5 },
+              symbol: 'circle',
+            },
+            hovertemplate: spikes.map(o => `${item.mine}<br>Date=${o.x}<br>Output=${o.y}<br>Tests=${(o.tests || []).join(', ')}`).map(t => `${t}<extra></extra>`),
+          });
+        }
+
+        if (drops.length) {
+          traces.push({
+            x: drops.map(o => o.x),
+            y: drops.map(o => o.y),
+            type: 'scatter',
+            mode: 'markers',
+            name: `${item.mine} drops`,
+            marker: {
+              size: 12,
+              color: '#f59e0b',
+              line: { color: '#ffffff', width: 1.5 },
+              symbol: 'diamond',
+            },
+            hovertemplate: drops.map(o => `${item.mine}<br>Date=${o.x}<br>Output=${o.y}<br>Tests=${(o.tests || []).join(', ')}`).map(t => `${t}<extra></extra>`),
+          });
+        }
+      });
+
+      const layout = {
+        template: 'plotly_white',
+        hovermode: 'closest',
+        barmode: chartType === 'stacked' ? 'stack' : 'group',
+        margin: { l: 60, r: 20, t: 20, b: 70 },
+        legend: { orientation: 'h', y: -0.22, x: 0 },
+        xaxis: {
+          title: 'Date',
+          tickangle: -35,
+          automargin: true,
+          type: 'category',
+        },
+        yaxis: {
+          title: 'Output',
+          automargin: true,
+          zeroline: false,
+        },
+        paper_bgcolor: '#ffffff',
+        plot_bgcolor: '#ffffff',
+      };
+
+      els.chart.innerHTML = '';
+      Plotly.newPlot(els.chart, traces, layout, {
+        responsive: true,
+        displaylogo: false,
+        modeBarButtonsToRemove: ['lasso2d', 'select2d'],
+      });
+    }
+
+    async function loadDashboard() {
+      const params = getParams();
+      if (!params.sheet_url) {
+        setStatus('Enter a Google Sheets URL first.', 'error');
+        els.chart.innerHTML = '<div class="error-state">Please provide a Google Sheets link or CSV export URL.</div>';
+        return;
+      }
+
+      state.loading = true;
+      state.error = null;
+      setStatus('Loading dataset and calculations…', 'info');
+      els.chart.innerHTML = '<div class="loading-state">Loading chart data…</div>';
+      els.metricsContainer.innerHTML = '<div class="loading-state">Calculating summary statistics…</div>';
+      els.anomaliesContainer.innerHTML = '<div class="loading-state">Running anomaly detection…</div>';
+
+      try {
+        const query = buildQueryString();
+        const response = await fetch(`/api/dashboard?${query}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to load dashboard data.');
+        }
+
+        state.payload = data;
+        renderDatasetMeta(data.dataset);
+        renderKpis(data);
+        renderChart(data);
+        renderMetricsTable(data.metrics);
+        renderAnomaliesTable(data.anomalies);
+        setStatus('Analysis ready', 'success');
+      } catch (error) {
+        state.error = error;
+        renderDatasetMeta(null);
+        renderKpis({ anomalies: [], dataset: { mine_count: 0 }, metrics: [] });
+        els.chart.innerHTML = `<div class="error-state">${escapeHtml(error.message || 'Unexpected error.')}</div>`;
+        els.metricsContainer.innerHTML = `<div class="error-state">${escapeHtml(error.message || 'Unexpected error.')}</div>`;
+        els.anomaliesContainer.innerHTML = `<div class="error-state">${escapeHtml(error.message || 'Unexpected error.')}</div>`;
+        setStatus('Failed to analyze dataset', 'error');
+      } finally {
+        state.loading = false;
+      }
+    }
+
+    function downloadPdf() {
+      const params = getParams();
+      if (!params.sheet_url) {
+        setStatus('Enter a Google Sheets URL first.', 'error');
+        return;
+      }
+      const query = buildQueryString();
+      window.open(`/report.pdf?${query}`, '_blank');
+    }
+
+    els.analyzeBtn.addEventListener('click', loadDashboard);
+    els.downloadPdfBtn.addEventListener('click', downloadPdf);
+    els.downloadPdfTopBtn.addEventListener('click', downloadPdf);
+    els.loadSampleBtn.addEventListener('click', () => {
+      if (!els.sheetUrl.value.trim()) {
+        els.sheetUrl.focus();
+        setStatus('Paste your Google Sheets link to continue.', 'info');
+      } else {
+        loadDashboard();
+      }
+    });
+    els.resetBtn.addEventListener('click', () => {
+      resetForm();
+      setStatus('Parameters reset', 'info');
+    });
+
+    [
+      els.sheetUrl,
+      els.entities,
+      els.chartType,
+      els.trendDegree,
+      els.iqrK,
+      els.zThreshold,
+      els.maWindow,
+      els.maPct,
+      els.grubbsAlpha,
+    ].forEach(el => {
+      el.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          loadDashboard();
+        }
+      });
+    });
+
+    if (els.sheetUrl.value.trim()) {
+      loadDashboard();
+    }
+  </script>
+</body>
+</html>
