@@ -19,7 +19,7 @@ from scipy.stats import t as student_t
 
 try:
     from weasyprint import HTML
-except Exception:  # pragma: no cover
+except Exception:
     HTML = None
 
 
