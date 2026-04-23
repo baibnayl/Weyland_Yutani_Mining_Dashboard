@@ -93,7 +93,7 @@ Live application: https://remarkable-reprieve-production.up.railway.app/
 - highlighted anomalies on charts
 - detailed PDF report export
 - separate sections for spikes and drops
-- UI and PDF layout designed to look professional
+- with a polished UI and report layout
 
 ## Spreadsheet Architecture
 
@@ -217,10 +217,7 @@ The report is designed to be readable and presentation-ready.
 
 ## Repository Structure
 
-The structure of this repository:
 ```
-project/
-│
 ├── app.py
 ├── templates/
 │   └── dashboard.html
